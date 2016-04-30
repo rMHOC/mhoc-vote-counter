@@ -10,9 +10,11 @@ import concurrent.futures
 import getpass
 import time
 
-##  INITIALISATION OF PROGRAM AND ERROR CHECKING FUNCTIONS
+# INITIALISATION OF PROGRAM AND ERROR CHECKING FUNCTIONS
+
 
 #   Error checking functions
+
 
 def checkURL():
     #Collects URL to be counted from
@@ -21,10 +23,10 @@ def checkURL():
     return URL
 
 def login():
-    #Collects login information for the user's reddit account
+    # Collects login information for the user's reddit account
     user = str(input('Reddit Username:'))
     try:
-        r.login(user,getpass.getpass('Reddit Password:'))
+        r.login(user,str(input('Reddit Password:')))
     except praw.errors.InvalidUserPass:
         print ("Incorrect Password")
         login()
@@ -36,16 +38,27 @@ docName = 'MHoC Master Sheet'
 docKey = 'VoteCounter2-af942bc69325.json'
 totalMPs = 100
 
+
 #   Loads the JSON Key, which is provided seperately
+
+
 json_key = json.load(open(docKey))
 scope = ['https://spreadsheets.google.com/feeds']
+
+
 #   Initilises all the credentials, and GoogleSheet stuff
+
+
 credentials = SignedJwtAssertionCredentials(json_key['client_email'], json_key['private_key'].encode(), scope)
 r = praw.Reddit('MHOC-plebian house, vote counter v1')
 gc = gspread.authorize(credentials)
 sh = gc.open(docName)
 wks = sh.worksheet(sheetName)
+
+
 #   User Input for Reddit/ Reddit information
+
+
 login()
 rThread = checkURL()
 
@@ -53,10 +66,7 @@ rThread = checkURL()
 #   Recording program start time
 strt = time.time()
 
-
-
-##  FUNCTION DEFINITIONS
-
+#  FUNCTION DEFINITIONS
 
 
 #   Function to find the bottom of the table of MPs
@@ -72,20 +82,28 @@ def getMPs():
     col = getCol()
     wksMPs = wks.col_values(3)[2:findLastMP(4)-1]
     wksMPIsSitting = wks.col_values(col)[2:findLastMP(4)-1]
+<<<<<<< HEAD
     for i in wksMPs:
         if wksMPIsSitting[wksMPs.index(i)] == 'N/A':
             del wksMPIsSitting[wksMPs.index(i)]
             wksMPs.remove(i)
     return wksMPs
+=======
+    out = []
+    for i in range(len(wksMPs)):
+        if wksMPIsSitting[i] != 'N/A':
+            out.append(wksMPs[i])
+    return out
+>>>>>>> a1cc42a... Fixed bug with getMPs() function
 
 
 #   Function to return votes from the division thread
 def getVotes(url):
-    #getting the list of comments
+    # getting the list of comments
     rThread = r.get_submission(url)
     rThread.replace_more_comments(limit=None, threshold=0)
     rComments = praw.helpers.flatten_tree(rThread.comments)
-    #returning the list of comments
+    # returning the list of comments
     return rComments
 
 
@@ -129,9 +147,10 @@ def titleCol():
     print("You are counting " + billNum)
     wks.update_cell(2, col, "=HYPERLINK(\"" + rThread + "\", \"" + billNum + "\")")
 
-##  END OF DECLARATION OF UTILITY FUNCTIONS - MAIN PROGRAM BELOW
+#  END OF DECLARATION OF UTILITY FUNCTIONS - MAIN PROGRAM BELOW
 #   Prepping spreadsheet
 titleCol()
+
 
 #   Compiling working lists
 votes = getVotes(rThread)
@@ -143,18 +162,18 @@ votesFinal = []
 
 #   Counting Function
 def countVote(gMP):
-    #Checking for multiple votes
+    # Checking for multiple votes
     voteCount = 0
     for i in votes:
         if str(i.author).lower() == gMP.lower():
             voteCount += 1
-    #Handling more than one vote
+    # Handling more than one vote
     if voteCount > 1:
         return gMP, 'DNV', True
-    #Handling no vote
+    # Handling no vote
     elif voteCount < 1:
         return gMP, 'DNV', False
-    #Handling exactly one vote
+    # Handling exactly one vote
     else:
         for i in votes:
             if str(i.author).lower() == gMP.lower():
@@ -165,26 +184,30 @@ def countVote(gMP):
                 elif 'abstain' in str(i.body).lower():
                     return gMP, 'Abs', False
 
+
 print("The votes were as follows: ")
 
 
-#   Initialisation of worker pool and asigning counting function and tasks to worker pool - no set worker cap means that the worker cap defaults to the number of CPU cores present
+#   Initialisation of worker pool and asigning counting function and tasks to worker pool - no set worker cap means that
+#   the worker cap defaults to the number of CPU cores present
 with concurrent.futures.ThreadPoolExecutor() as executor:
     for out in executor.map(countVote, gMPs):
-        #Handling output from counting function
+        # Handling output from counting function
         MP, vote, isDupe = out
         if isDupe == False:
             print(MP + " : " + vote)
             if not vote == 'DNV':
                 votesFinal.append(vote)
-            
+
         else:
             print(MP + " voted more than once and recieved a DNV")
             duplicateVotes.append(MP)
         updateList[gMPs.index(MP)].value = vote
 
-#   Updating spreadsheet 
+
+#   Updating spreadsheet
 wks.update_cells(updateList)
+
 
 #   Counting total valid aye, nay and abs votes and turnout
 print("The Ayes to the right: " + str(sumVotes('Aye', votesFinal)))
@@ -193,7 +216,7 @@ print("Abstentions: " + str(sumVotes('Abs', votesFinal)))
 print(len(votesFinal), len(gMPs))
 turnout = str((len(votesFinal)/totalMPs)*100)
 print("Turnout: " + turnout + "%")
-      
+
 
 #   Recording end time
 end = time.time()
