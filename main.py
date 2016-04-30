@@ -66,7 +66,9 @@ rThread = checkURL()
 #   Recording program start time
 strt = time.time()
 
-#  FUNCTION DEFINITIONS
+
+
+##  FUNCTION DEFINITIONS
 
 
 #   Function to find the bottom of the table of MPs
@@ -99,11 +101,11 @@ def getMPs():
 
 #   Function to return votes from the division thread
 def getVotes(url):
-    # getting the list of comments
+    #getting the list of comments
     rThread = r.get_submission(url)
     rThread.replace_more_comments(limit=None, threshold=0)
     rComments = praw.helpers.flatten_tree(rThread.comments)
-    # returning the list of comments
+    #returning the list of comments
     return rComments
 
 
@@ -147,7 +149,7 @@ def titleCol():
     print("You are counting " + billNum)
     wks.update_cell(2, col, "=HYPERLINK(\"" + rThread + "\", \"" + billNum + "\")")
 
-#  END OF DECLARATION OF UTILITY FUNCTIONS - MAIN PROGRAM BELOW
+##  END OF DECLARATION OF UTILITY FUNCTIONS - MAIN PROGRAM BELOW
 #   Prepping spreadsheet
 titleCol()
 
@@ -162,18 +164,18 @@ votesFinal = []
 
 #   Counting Function
 def countVote(gMP):
-    # Checking for multiple votes
+    #Checking for multiple votes
     voteCount = 0
     for i in votes:
         if str(i.author).lower() == gMP.lower():
             voteCount += 1
-    # Handling more than one vote
+    #Handling more than one vote
     if voteCount > 1:
         return gMP, 'DNV', True
-    # Handling no vote
+    #Handling no vote
     elif voteCount < 1:
         return gMP, 'DNV', False
-    # Handling exactly one vote
+    #Handling exactly one vote
     else:
         for i in votes:
             if str(i.author).lower() == gMP.lower():
@@ -188,11 +190,10 @@ def countVote(gMP):
 print("The votes were as follows: ")
 
 
-#   Initialisation of worker pool and asigning counting function and tasks to worker pool - no set worker cap means that
-#   the worker cap defaults to the number of CPU cores present
+#   Initialisation of worker pool and asigning counting function and tasks to worker pool - no set worker cap means that the worker cap defaults to the number of CPU cores present
 with concurrent.futures.ThreadPoolExecutor() as executor:
     for out in executor.map(countVote, gMPs):
-        # Handling output from counting function
+        #Handling output from counting function
         MP, vote, isDupe = out
         if isDupe == False:
             print(MP + " : " + vote)
