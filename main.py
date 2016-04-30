@@ -199,14 +199,14 @@ with concurrent.futures.ThreadPoolExecutor() as executor:
             print(MP + " : " + vote)
             if not vote == 'DNV':
                 votesFinal.append(vote)
-
+            
         else:
             print(MP + " voted more than once and recieved a DNV")
             duplicateVotes.append(MP)
         updateList[gMPs.index(MP)].value = vote
 
 
-#   Updating spreadsheet
+#   Updating spreadsheet 
 wks.update_cells(updateList)
 
 
@@ -217,7 +217,7 @@ print("Abstentions: " + str(sumVotes('Abs', votesFinal)))
 print(len(votesFinal), len(gMPs))
 turnout = str((len(votesFinal)/totalMPs)*100)
 print("Turnout: " + turnout + "%")
-
+      
 
 #   Recording end time
 end = time.time()
