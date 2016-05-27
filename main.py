@@ -8,9 +8,9 @@ import re
 
 #Variables, change these when the government etc changes
 sheetName = '10th Govt Voting Record' #Identify what 'tab' the votes are on
-sheetKey  = '1WsCsMbo6lHM5FNlohwoWPde3pyLtZvuFSpFKg0jmxck' #unique identifier
+sheetKey  = '1Ks2vvHSfhcdBkzwqesEsQ2hZ3HPfanSyLJ3Ga0MMN68' #unique identifier
                                                            #for the spreadsheet
-accessKey = 'VoteCounter2-af942bc69325.json' # location of the file with logins
+accessKey = 'ServiceKey.json' # location of the file with logins
 totalMPs  = 100 #For turnout
 lastCellOnSheet = 'BZ'
 
@@ -72,7 +72,7 @@ def count(thread):
             try:
                 already_done_id.append(comment.id)
                 already_done_name.append(comment.author)
-                row = 6 + authors.index(str(comment.author).lower())
+                row = 3 + authors.index(str(comment.author).lower())
                 if 'aye' in str(comment.body).lower():
                     aye += 1
                     dnv -= 1
@@ -116,6 +116,6 @@ password = str(input('Reddit Password: '))
 r.login(user,password)
 print('Post Voting Thread Link')
 thread = str(input())
-bottomRow   = int(sheet.find('TOTALS:').row) - 1 #For use in script to calculate once
+bottomRow   = int(sheet.find('Speaker').row) - 1 #For use in script to calculate once
 
 count(thread)
