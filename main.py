@@ -1,205 +1,121 @@
-#!
-__author__ = __author__ = [  'agentnola', 'chrispytoast123', 'jb567', 'electric-blue', 'rexrex600' ]
-
+from oauth2client.service_account import ServiceAccountCredentials
+import concurrent.futures
+import getpass
 import gspread
 import json
 import praw
 import re
-from oauth2client.client import SignedJwtAssertionCredentials
-import concurrent.futures
-import getpass
 
-# INITIALISATION OF PROGRAM AND ERROR CHECKING FUNCTIONS
+#Variables, change these when the government etc changes
+sheetName = '10th Govt Voting Record' #Identify what 'tab' the votes are on
+sheetKey  = '1WsCsMbo6lHM5FNlohwoWPde3pyLtZvuFSpFKg0jmxck' #unique identifier
+                                                           #for the spreadsheet
+accessKey = 'VoteCounter2-af942bc69325.json' # location of the file with logins
+totalMPs  = 100 #For turnout
+lastCellOnSheet = 'BZ'
 
-
-#   Error checking functions
-
-
-def checkURL():
-    #Collects URL to be counted from
-    print('Copy Voting Thread Link Below')
-    URL = str(input())
-    return URL
-
-
-def login():
-    # Collects login information for the user's reddit account
-    user = str(input('Reddit Username:'))
-    try:
-        r.login(user,str(input('Reddit Password:')))
-    except praw.errors.InvalidUserPass:
-        print ("Incorrect Password")
-        login()
-
-#   Variables
-
-sheetName = '10th Govt Voting Record'
-docName = 'MHoC Master Sheet'
-docKey = 'VoteCounter2-af942bc69325.json'
-totalMPs = 100
-
-
-#   Loads the JSON Key, which is provided seperately
-
-
-json_key = json.load(open(docKey))
-scope = ['https://spreadsheets.google.com/feeds']
-
-
-#   Initilises all the credentials, and GoogleSheet stuff
-
-
-credentials = SignedJwtAssertionCredentials(json_key['client_email'], json_key['private_key'].encode(), scope)
-r = praw.Reddit('MHOC-plebian house, vote counter v1')
-gc = gspread.authorize(credentials)
-sh = gc.open(docName)
-wks = sh.worksheet(sheetName)
-
-
-#   User Input for Reddit/ Reddit information
-
-
-login()
-rThread = checkURL()
-
-
-#   Recording program start time
-
-
-
-##  FUNCTION DEFINITIONS
-
-
-#   Function to find the bottom of the table of MPs
-def findLastMP(wksColumn):
-    wksCellList = wks.col_values(wksColumn)
-    for wksCell in wksCellList:
-        if wksCell == "Speaker":
-            return wks.find(wksCell).row
-
-
-#   Function to return full list of sitting MPs
-def getMPs():
-    col = getCol()
-    wksMPs = wks.col_values(3)[2:findLastMP(4)-1]
-    wksMPIsSitting = wks.col_values(col)[2:findLastMP(4)-1]
-    out = []
-    for i in range(len(wksMPs)):
-        if wksMPIsSitting[i] != 'N/A':
-            out.append(wksMPs[i])
-    return out
-
-
-#   Function to return votes from the division thread
-def getVotes(url):
-    #getting the list of comments
-    rThread = r.get_submission(url)
-    rThread.replace_more_comments(limit=None, threshold=0)
-    rComments = praw.helpers.flatten_tree(rThread.comments)
-    #returning the list of comments
-    return rComments
-
-
-#   Function to return left-most empty column into which the results are recorded
-def getCol():
-    cells = wks.range('F3:BZ3')
-    for cell in cells:
+###############################################################################
+###################################FUNCTIONS###################################
+###############################################################################
+def count(thread):
+    global r
+    global sheet
+    global bottomRow
+    
+    aye     = 0
+    nay     = 0
+    abstain = 0
+    dnv     = 0
+    #Get latest vote column
+    vote_cells = sheet.range('F2:' + lastCellOnSheet + '2')
+    for cell in vote_cells:
         if cell.value == '':
             col = cell.col
             break
-    return col
+    #auto-DNV
+    vote_list = sheet.range(sheet.get_addr_int(3,col) + ':' +
+                            sheet.get_addr_int(bottomRow, col))
+    for cell in vote_list:
+        if not cell.value.lower() == 'N/A'.lower():
+            cell.value = 'DNV'
+            dnv += 1
+    sheet.update_cells(vote_list)
+
+    sub = r.get_submission(thread)
+
+    #do the bill title
+    title = str(sub.title)
+    billName = str(re.search('^(\S+)', title).group())
+    sheet.update_cell(2, col, billName)
+
+    #count votes
+    already_done_id   = []
+    already_done_name = []
+    dupes             = []
+    #Get all the comments
+    sub.replace_more_comments(limit=None, threshold=0)
+    comments = praw.helpers.flatten_tree(sub.comments)
+
+    #Get all the voters
+    authors_cells = sheet.range('C3:' + sheet.get_addr_int(bottomRow, 3))
+    authors = []
+    for author in authors_cells:
+        authors.append(str(author.value).lower())
+    #iterate through the votes
+    for comment in comments:
+        if comment.author in already_done_name:
+            print('ALERT: DOUBLE VOTING ' + str(comment.author))
+            dupes.append(comment.author)
+        if comment.id not in already_done_id:
+            print(str(comment.author) + ': ' + comment.body)
+            messageContent = ''
+            try:
+                already_done_id.append(comment.id)
+                already_done_name.append(comment.author)
+                row = 6 + authors.index(str(comment.author).lower())
+                if 'aye' in str(comment.body).lower():
+                    aye += 1
+                    dnv -= 1
+                    messageContent='Aye'
+                elif 'nay' in str(comment.body).lower():
+                    nay += 1
+                    dnv -= 1
+                    messageContent='Nay'
+                elif 'abstain' in str(comment.body).lower():
+                    abstain += 1
+                    dnv -= 1
+                    messageContent='Abs'
+                if messageContent != '' and sheet.acell(sheet.get_addr_int(row,
+                    col)).value != 'N/A':
+                    sheet.update_cell(row,col, messageContent)
+                else:
+                    dupes.append(comment.author)
+            except gspread.exceptions.CellNotFound:
+                print('Automoderator Comment')
+    print('Dupes are:' + str(dupes))
+    print('Done')
+    print('Yea: ' + str(aye))
+    print('Nay: ' + str(nay))
+    print('Abstain: ' + str(abstain))
+    print('No Vote: ' + str(dnv))
+    print('===========================')
 
 
-#   Function to determine which cells need updating
-def getUpdateCells(MPs):
-    col = getCol()
-    updateList = wks.range(str(wks.get_addr_int(3, col)) + ":" + wks.get_addr_int(findLastMP(4)-1, col))
-    wksMPIsSitting = wks.col_values(col)[2:findLastMP(4)-1]
-    for i in updateList:
-        if wksMPIsSitting[updateList.index(i)] == 'N/A':
-            del wksMPIsSitting[updateList.index(i)]
-            updateList.remove(i)
-    return updateList
+#   Initilises all the credentials, and GoogleSheet stuff
+scope = ['https://spreadsheets.google.com/feeds']
+credentials = ServiceAccountCredentials.from_json_keyfile_name('ServiceKey.json', scope)
+r = praw.Reddit('MHOC-plebian house, vote counter v1')
+gc = gspread.authorize(credentials)
+sh = gc.open_by_key(sheetKey)
+sheet = sh.worksheet(sheetName)
 
-
-#   Function to count aye/nay/abs votes
-def sumVotes(vote, votes):
-    total = 0
-    for i in votes:
-        if i == vote:
-            total += 1
-    return total
-
-
-#   Function to title column into which votes will be recorded
-def titleCol():
-    col = getCol()
-    title = str(rThread.title())
-    billNum = title.split("/")[-2]
-    billNum = billNum.split("_")[0]
-    print("You are counting " + billNum)
-    wks.update_cell(2, col, "=HYPERLINK(\"" + rThread + "\", \"" + billNum + "\")")
-
-##  END OF DECLARATION OF UTILITY FUNCTIONS - MAIN PROGRAM BELOW
-#   Prepping spreadsheet
-titleCol()
-
-
-#   Compiling working lists
-votes = getVotes(rThread)
-gMPs = getMPs()
-updateList = getUpdateCells(gMPs)
-duplicateVotes = []
-votesFinal = []
-
-
-#   Counting Function
-def countVote(gMP):
-    #Checking for multiple votes
-    voteCount = 0
-    for i in votes:
-        if str(i.author).lower() == gMP.lower():
-            voteCount += 1
-    #Handling more than one vote
-    if voteCount > 1:
-        return gMP, 'DNV', True
-    #Handling no vote
-    elif voteCount < 1:
-        return gMP, 'DNV', False
-    #Handling exactly one vote
-    else:
-        for i in votes:
-            if str(i.author).lower() == gMP.lower():
-                if 'aye' in str(i.body).lower():
-                    return gMP, 'Aye', False
-                elif 'nay' in str(i.body).lower():
-                    return gMP, 'Nay', False
-                elif 'abstain' in str(i.body).lower():
-                    return gMP, 'Abs', False
-
-
-print("The votes were as follows: ")
-
-
-#   Initialisation of worker pool and asigning counting function and tasks to worker pool - no set worker cap means that the worker cap defaults to the number of CPU cores present
-with concurrent.futures.ThreadPoolExecutor() as executor:
-    for out in executor.map(countVote, gMPs):
-        #Handling output from counting function
-        MP, vote, isDupe = out
-        if isDupe == False:
-            print(MP + " : " + vote)
-            if not vote == 'DNV':
-                votesFinal.append(vote)
-
-        else:
-            print(MP + " voted more than once and recieved a DNV")
-            duplicateVotes.append(MP)
-        updateList[gMPs.index(MP)].value = vote
-
-
-#   Updating spreadsheet
-wks.update_cells(updateList)
-
+#   User Input for Reddit/ Reddit information
+user = str(input('Reddit Username: '))
+password = str(input('Reddit Password: '))
+r.login(user,password)
+print('Post Voting Thread Link')
+thread = str(input())
+bottomRow   = int(sheet.find('TOTALS:').row) - 1 #For use in script to calculate once
 
 #   Counting total valid aye, nay and abs votes and turnout
 print("The Ayes to the right: " + str(sumVotes('Aye', votesFinal)))
