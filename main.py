@@ -98,6 +98,7 @@ def count(thread):
     print('Nay: ' + str(nay))
     print('Abstain: ' + str(abstain))
     print('No Vote: ' + str(dnv))
+    print('Turnout: ' + str(float((totalMPs-dnv)/totalMPs)))
     print('===========================')
 
 
@@ -117,10 +118,4 @@ print('Post Voting Thread Link')
 thread = str(input())
 bottomRow   = int(sheet.find('TOTALS:').row) - 1 #For use in script to calculate once
 
-#   Counting total valid aye, nay and abs votes and turnout
-print("The Ayes to the right: " + str(sumVotes('Aye', votesFinal)))
-print("The Noes to the right: " + str(sumVotes('Nay', votesFinal)))
-print("Abstentions: " + str(sumVotes('Abs', votesFinal)))
-print(len(votesFinal), len(gMPs))
-turnout = str((len(votesFinal)/totalMPs)*100)
-print("Turnout: " + turnout + "%")
+count(thread)
