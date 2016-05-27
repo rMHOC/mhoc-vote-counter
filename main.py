@@ -8,7 +8,6 @@ import re
 from oauth2client.client import SignedJwtAssertionCredentials
 import concurrent.futures
 import getpass
-import time
 
 # INITIALISATION OF PROGRAM AND ERROR CHECKING FUNCTIONS
 
@@ -65,7 +64,6 @@ rThread = checkURL()
 
 
 #   Recording program start time
-strt = time.time()
 
 
 
@@ -210,11 +208,3 @@ print("Abstentions: " + str(sumVotes('Abs', votesFinal)))
 print(len(votesFinal), len(gMPs))
 turnout = str((len(votesFinal)/totalMPs)*100)
 print("Turnout: " + turnout + "%")
-
-
-#   Recording end time
-end = time.time()
-
-
-#   Feeding back total runtime - Generally around 20 seconds
-print("The count took " + str(end-strt) + " seconds")
