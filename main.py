@@ -66,7 +66,7 @@ def count(thread):
         if comment.author in already_done_name:
             print('ALERT: DOUBLE VOTING ' + str(comment.author))
             dupes.append(comment.author)
-        if comment.id not in already_done_id:
+        if comment.id not in already_done_id and str(comment.author).lower() not in 'automoderator':
             print(str(comment.author) + ': ' + comment.body)
             messageContent = ''
             try:
