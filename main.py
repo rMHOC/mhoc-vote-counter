@@ -70,26 +70,29 @@ def count(thread):
             print(str(comment.author) + ': ' + comment.body)
             messageContent = ''
             try:
-                already_done_id.append(comment.id)
-                already_done_name.append(comment.author)
-                row = 3 + authors.index(str(comment.author).lower())
-                if 'aye' in str(comment.body).lower():
-                    aye += 1
-                    dnv -= 1
-                    messageContent='Aye'
-                elif 'nay' in str(comment.body).lower():
-                    nay += 1
-                    dnv -= 1
-                    messageContent='Nay'
-                elif 'abstain' in str(comment.body).lower():
-                    abstain += 1
-                    dnv -= 1
-                    messageContent='Abs'
-                if messageContent != '' and sheet.acell(sheet.get_addr_int(row,
-                    col)).value != 'N/A':
-                    sheet.update_cell(row,col, messageContent)
+                if str(comment.author).lower() in authors:
+                    already_done_id.append(comment.id)
+                    already_done_name.append(comment.author)
+                    row = 3 + authors.index(str(comment.author).lower())
+                    if 'aye' in str(comment.body).lower():
+                        aye += 1
+                        dnv -= 1
+                        messageContent='Aye'
+                    elif 'nay' in str(comment.body).lower():
+                        nay += 1
+                        dnv -= 1
+                        messageContent='Nay'
+                    elif 'abstain' in str(comment.body).lower():
+                        abstain += 1
+                        dnv -= 1
+                        messageContent='Abs'
+                    if messageContent != '' and sheet.acell(sheet.get_addr_int(row,
+                        col)).value != 'N/A':
+                        sheet.update_cell(row,col, messageContent)
+                    else:
+                        dupes.append(comment.author)
                 else:
-                    dupes.append(comment.author)
+                    print('well thats not in the list...')
             except gspread.exceptions.CellNotFound:
                 print('Automoderator Comment')
     print('Dupes are:' + str(dupes))
