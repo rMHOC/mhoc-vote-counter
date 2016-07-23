@@ -23,7 +23,7 @@ def count(thread):
     global bottomRow
     
     aye     = 0
-    nay     = 0
+    no      = 0
     abstain = 0
     dnv     = 0
     #Get latest vote column
@@ -46,7 +46,7 @@ def count(thread):
     #do the bill title
     title = str(sub.title)
     billName = str(re.search('^(\S+)', title).group())
-    sheet.update_cell(2, col, '=HREF("' + thread + '", "' + billName + '")')
+    sheet.update_cell(2, col, billName)
 
     #count votes
     already_done_id   = []
@@ -78,8 +78,8 @@ def count(thread):
                         aye += 1
                         dnv -= 1
                         messageContent='Aye'
-                    elif 'nay' in str(comment.body).lower() or 'no' in str(comment.body).lower():
-                        nay += 1
+                    elif 'nay' or 'no' in str(comment.body).lower():
+                        no  += 1
                         dnv -= 1
                         messageContent='No'
                     elif 'abstain' in str(comment.body).lower():
@@ -97,8 +97,8 @@ def count(thread):
                 print('Automoderator Comment')
     print('Dupes are:' + str(dupes))
     print('Done')
-    print('Yea: ' + str(aye))
-    print('Nay: ' + str(nay))
+    print('Aye: ' + str(aye))
+    print('No: ' + str(no))
     print('Abstain: ' + str(abstain))
     print('No Vote: ' + str(dnv))
     print('Turnout: ' + str(float((totalMPs-dnv)/totalMPs)))
