@@ -78,7 +78,7 @@ def count(thread):
                         aye += 1
                         dnv -= 1
                         messageContent='Aye'
-                    elif 'nay' or 'no' in str(comment.body).lower():
+                    elif 'nay' in str(comment.body).lower() or 'no' in str(comment.body).lower():
                         no  += 1
                         dnv -= 1
                         messageContent='No'
