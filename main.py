@@ -46,7 +46,7 @@ def count(thread):
     #do the bill title
     title = str(sub.title)
     billName = str(re.search('^(\S+)', title).group())
-    sheet.update_cell(2, col, billName)
+    sheet.update_cell(2, col, '=HYPERLINK("' + thread + '", "' + billName + '")')
 
     #count votes
     already_done_id   = []
