@@ -7,7 +7,7 @@ import praw
 import re
 
 #Variables, change these when the government etc changes
-sheetName = '11th Govt Voting Record' #Identify what 'tab' the votes are on
+sheetName = '12th Govt Voting Record' #Identify what 'tab' the votes are on
 sheetKey  = '1Wl7gnsi2czK-MrCyVkXTidR3qJOMXyOkfApPsocveJs' #unique identifier
                                                            #for the spreadsheet
 accessKey = 'ServiceKey.json' # location of the file with logins
