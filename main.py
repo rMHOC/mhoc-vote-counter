@@ -7,12 +7,15 @@ import praw
 import re
 
 #Variables, change these when the government etc changes
-sheetName = '12th Govt Voting Record' #Identify what 'tab' the votes are on
+sheetName = '13th Govt Voting Record' #Identify what 'tab' the votes are on
 sheetKey  = '1Wl7gnsi2czK-MrCyVkXTidR3qJOMXyOkfApPsocveJs' #unique identifier
                                                            #for the spreadsheet
 accessKey = 'ServiceKey.json' # location of the file with logins
 totalMPs  = 100 #For turnout
 lastCellOnSheet = 'BZ'
+
+authorisedProxies = ["jb567", "akc8", "duncs11", "infernoplato",
+                     "thechattyshow", "jellytom", "premierhirohito","alajv3"]
 
 ###############################################################################
 ###################################FUNCTIONS###################################
@@ -21,6 +24,7 @@ def count(thread):
     global r
     global sheet
     global bottomRow
+    global authorisedProxies
     
     aye     = 0
     no      = 0
@@ -63,14 +67,33 @@ def count(thread):
         authors.append(str(author.value).lower())
     #iterate through the votes
     for comment in comments:
+        print(str(comment.author) + ': ' + comment.body)
         if comment.author in already_done_name:
-            print('ALERT: DOUBLE VOTING ' + str(comment.author))
+            print('ALERT: POSSIBLE DOUBLE VOTING ' + str(comment.author))
             dupes.append(comment.author)
-        if comment.id not in already_done_id and str(comment.author).lower() not in 'automoderator':
-            print(str(comment.author) + ': ' + comment.body)
+        if comment.id not in already_done_id and (str(comment.author).lower() not in 'automoderator' or str(comment.author).lower() not in 'None'):
             messageContent = ''
             try:
-                if str(comment.author).lower() in authors:
+                if 'proxy' in str(comment.body).lower():
+                    if str(comment.author).lower() in authorisedProxies:
+                        author = re.search('(?<=\/u\/)\S+', str(comment.body).lower()).group(0).lower()
+                        row = 3 + authors.index(author)
+                        if 'aye' in str(comment.body).lower():
+                            aye += 1
+                            dnv -= 1
+                            messageContent='Aye'
+                        elif 'nay' in str(comment.body).lower() or 'no' in str(comment.body).lower():
+                            no  += 1
+                            dnv -= 1
+                            messageContent='No'
+                        elif 'abstain' in str(comment.body).lower():
+                            abstain += 1
+                            dnv -= 1
+                            messageContent='Abs'
+                        if messageContent != '' and sheet.acell(sheet.get_addr_int(row,
+                            col)).value != 'N/A':
+                            sheet.update_cell(row,col, messageContent)
+                elif str(comment.author).lower() in authors:
                     already_done_id.append(comment.id)
                     already_done_name.append(comment.author)
                     row = 3 + authors.index(str(comment.author).lower())
