@@ -15,7 +15,8 @@ totalMPs  = 100 #For turnout
 lastCellOnSheet = 'BZ'
 
 authorisedProxies = ["jb567", "akc8", "duncs11", "infernoplato",
-                     "thechattyshow", "jellytom", "premierhirohito","alajv3"]
+                     "thechattyshow", "jellytom", "premierhirohito","alajv3",
+                    "johnthedoctor"]
 
 ###############################################################################
 ###################################FUNCTIONS###################################
