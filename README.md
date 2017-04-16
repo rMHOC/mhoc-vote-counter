@@ -1,7 +1,7 @@
 # MHOCAutomaticVoteCounter
-A Program to count the votes in MHOC. 
+## A Program to count the votes in MHOC. 
 
-Requires:
+## Requires:
 * Praw - v3.4.0
 * Oauth2Client v1.5.2
 * GSpread - v0.3.0
@@ -10,3 +10,10 @@ Requires:
 * concurrent.futures - N/A
 * getpass - N/A
 * time - N/A
+
+*Incompatible with Praw 4.x*
+
+## Install
+### Pip Install
+
+`pip install praw==3.4.0`
