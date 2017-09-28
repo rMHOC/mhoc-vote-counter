@@ -7,20 +7,15 @@ import praw
 import re
 
 #Variables, change these when the government etc changes
-sheetName = '14th Govt Voting Record' #Identify what 'tab' the votes are on
-sheetKey  = '1Wl7gnsi2czK-MrCyVkXTidR3qJOMXyOkfApPsocveJs' #unique identifier
+sheetName = '16th Govt Voting Record' #Identify what 'tab' the votes are on
+sheetKey  = '1t99JHbJ9Itjz7TUyCe6GNJPLfaSAhr2lwh4sR25Psgw' #unique identifier
                                                            #for the spreadsheet
 accessKey = 'ServiceKey.json' # location of the file with logins
-totalMPs  = 100 #For turnout
-lastCellOnSheet = 'BZ'
+totalMPs  = 108 #For turnout
+lastCellOnSheet = 'BY'
 
-authorisedProxies = ["jb567", "akc8", "duncs11", "infernoplato",
-                     "thechattyshow", "jellytom", "premierhirohito","alajv3",
-                    "johnthedoctor"]
+# functions
 
-###############################################################################
-###################################FUNCTIONS###################################
-###############################################################################
 def count(thread):
     global r
     global sheet
